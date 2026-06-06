@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>El Diario del Profesor Arthur</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Outfit:wght@400;500;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    :root{
+        --ink:#3a2a1a; --parch:#f2e4c9; --gold:#c9952f; --gold-soft:#e8c878;
+    }
+    body {
+        background-color:#15120d;
+        background-image:
+            radial-gradient(circle at 50% 0%, #2a2014 0%, #15120d 55%, #0c0a06 100%);
+        font-family:'Outfit', sans-serif;
+        overflow-x:hidden; color:#f4ecd8;
+    }
+    .frame{
+        box-shadow:0 30px 70px rgba(0,0,0,.6), inset 0 0 0 1px rgba(201,149,47,.25);
+        border:10px solid #211810;
+        border-radius:22px;
+        background:linear-gradient(160deg,#241a10,#171109);
+        position:relative;
+    }
+    /* textura sutil de papel/grano en el marco */
+    .frame::before{
+        content:""; position:absolute; inset:0; border-radius:14px; pointer-events:none;
+        background-image:radial-gradient(rgba(201,149,47,.04) 1px, transparent 1px);
+        background-size:5px 5px; opacity:.5;
+    }
+    .screen{ position:relative; overflow:hidden; background:#0c0a06; border-radius:14px;}
+    canvas{ display:block; width:100%; height:100%; image-rendering:auto;}
+    h1.title{ font-family:'Fraunces', serif; }
+    .tag{ font-family:'Fraunces', serif; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="text-center mb-5 z-20">
+        <h1 class="title text-3xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-[#f3d997] via-[#d8a945] to-[#9a6a1e] drop-shadow-[0_3px_8px_rgba(0,0,0,.6)]">
+            El Diario del Profesor Arthur
+        </h1>
+        <p class="tag text-sm md:text-base text-amber-200/70 mt-1 italic">
+            Un día reconstruido, memoria a memoria.
+        </p>
+    </div>
+
+    <div class="frame w-full max-w-5xl p-3 md:p-5 flex flex-col items-center">
+        <div class="screen w-full aspect-[1000/700] border border-[#3a2c18] shadow-2xl">
+            <canvas id="gameCanvas" width="1000" height="700"></canvas>
+            <!-- Panel de PRODUCCIÓN FINAL (se muestra solo en la última fase) -->
+            <div id="prod" style="display:none;position:absolute;inset:0;overflow:auto;padding:5% 6%;box-sizing:border-box;
+                 background:radial-gradient(circle at 50% -10%,#2a2014,#15120d 60%);color:#f4ecd8;font-family:'Outfit',sans-serif;">
+                <p style="text-align:center;font-size:.82rem;letter-spacing:.08em;color:#caa84a;font-weight:600;margin:0 0 .2rem">TAREA FINAL · TU PROPIO DIARIO</p>
+                <h2 style="text-align:center;font-family:'Fraunces',serif;font-weight:900;font-size:clamp(1.6rem,3.2vw,2.4rem);margin:0 0 .4rem;color:#f4ecd8">Ahora te toca a ti</h2>
+                <p style="text-align:center;font-size:clamp(.85rem,1.6vw,1rem);color:#d8c39a;max-width:46rem;margin:0 auto 1rem">
+                    Igual que Arthur, escribe tu propia rutina diaria en inglés (4–6 oraciones). Cuenta tu día desde que despiertas hasta que duermes.</p>
+                <div style="display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;max-width:48rem;margin:0 auto .8rem">
+                    <span style="font-size:.78rem;color:#9a865e;align-self:center">Puedes usar:</span>
+                    <code style="background:#3a2c18;color:#e8c878;padding:.2rem .5rem;border-radius:6px;font-size:.78rem">First / Then / Finally</code>
+                    <code style="background:#3a2c18;color:#e8c878;padding:.2rem .5rem;border-radius:6px;font-size:.78rem">I wake up at…</code>
+                    <code style="background:#3a2c18;color:#e8c878;padding:.2rem .5rem;border-radius:6px;font-size:.78rem">have breakfast</code>
+                    <code style="background:#3a2c18;color:#e8c878;padding:.2rem .5rem;border-radius:6px;font-size:.78rem">in the morning</code>
+                    <code style="background:#3a2c18;color:#e8c878;padding:.2rem .5rem;border-radius:6px;font-size:.78rem">at night</code>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;max-width:52rem;margin:0 auto">
+                    <textarea id="prodText" placeholder="First, I wake up at 6:00 in the morning. Then, I have breakfast with my family…"
+                        style="flex:1 1 24rem;min-height:9.5rem;resize:vertical;background:#f6ead0;color:#3a2a16;border:2px solid #c9a86a;border-radius:10px;
+                        padding:.8rem .9rem;font-family:'Courier Prime',monospace;font-size:1rem;line-height:1.5;outline:none"></textarea>
+                    <div style="flex:1 1 16rem;background:rgba(20,14,8,.5);border:1px solid #3a2c18;border-radius:10px;padding:.8rem 1rem">
+                        <p style="font-size:.78rem;color:#caa84a;font-weight:600;margin:0 0 .5rem">INGREDIENTES (incluye al menos 2)</p>
+                        <ul id="prodChecks" style="margin:0;padding:0;font-size:.82rem"></ul>
+                        <p id="prodCount" style="font-size:.72rem;color:#8a7656;margin:.7rem 0 0">0 caracteres · 0/4 ingredientes</p>
+                    </div>
+                </div>
+                <div style="display:flex;gap:.7rem;justify-content:center;margin-top:1rem;flex-wrap:wrap">
+                    <button id="prodSpeak" style="background:#3a2c18;color:#e8c878;border:1px solid #6a5230;border-radius:10px;padding:.6rem 1.1rem;font-weight:600;cursor:pointer;font-family:inherit">🔊 Escuchar mi texto</button>
+                    <button id="prodFinish" disabled style="background:#b07d28;color:#241a10;border:none;border-radius:10px;padding:.6rem 1.4rem;font-weight:700;font-family:inherit;opacity:.4;cursor:not-allowed">Terminar y restaurar el diario ✦</button>
+                </div>
+            </div>
+        </div>
+        <div class="w-full mt-4 bg-black/30 rounded-xl border border-[#3a2c18]/70 px-4 py-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-1 text-center">
+            <p class="text-xs md:text-sm text-amber-100/80 font-medium">🖱️ Pasa el cursor sobre una opción para previsualizarla en el diario.</p>
+            <p class="text-xs md:text-sm text-amber-300/90 font-medium">🔊 Escucha &nbsp;·&nbsp; 💡 Pide una pista a Arthur</p>
+        </div>
+    </div>
+
+    <div class="mt-5 text-center z-10 font-medium">
+        <p class="text-sm text-amber-200/70">Diseñado por <span class="tag italic text-amber-300/90">Juan S. Llinás</span></p>
+        <p class="text-[11px] text-amber-200/30 mt-1">© 2026 · Academic Memory Restoration · Diseñado para aprender inglés con calma.</p>
+    </div>
+
+<script>
+"use strict";
+/* =========================================================
+   AUDIO SINTETIZADO (Web Audio API)
+========================================================= */
+const Sound = {
+    ctx:null,
+    init(){ if(!this.ctx){ try{ this.ctx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(this.ctx&&this.ctx.state==='suspended') this.ctx.resume(); },
+    tone(freq,dur,type='sine',off=0,vol=0.08){
+        this.init(); if(!this.ctx) return;
+        const now=this.ctx.currentTime+off;
+        const o=this.ctx.createOscillator(), g=this.ctx.createGain();
+        o.type=type; o.frequency.setValueAtTime(freq,now);
+        g.gain.setValueAtTime(vol,now); g.gain.exponentialRampToValueAtTime(0.001,now+dur);
+        o.connect(g); g.connect(this.ctx.destination); o.start(now); o.stop(now+dur);
+    },
+    correct(){ this.tone(523.25,.15,'sine',0,.09); this.tone(659.25,.2,'sine',.1,.09); this.tone(783.99,.32,'sine',.2,.09); },
+    wrong(){ this.init(); if(!this.ctx) return; const now=this.ctx.currentTime; const o=this.ctx.createOscillator(),g=this.ctx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(300,now); o.frequency.exponentialRampToValueAtTime(95,now+.4); g.gain.setValueAtTime(.13,now); g.gain.exponentialRampToValueAtTime(.001,now+.4); o.connect(g); g.connect(this.ctx.destination); o.start(now); o.stop(now+.4); },
+    click(){ this.tone(440,.08,'sine',0,.07); },
+    page(){ this.tone(180,.12,'triangle',0,.05); this.tone(260,.1,'sine',.05,.04); },
+    win(){ [523,659,784,1047].forEach((f,i)=>this.tone(f,.4,'sine',i*0.13,.09)); },
+    lose(){ [392,330,262].forEach((f,i)=>this.tone(f,.45,'triangle',i*0.18,.1)); },
+    chime(){ this.tone(880,.5,'sine',0,.05); this.tone(1320,.5,'sine',.04,.03); }
+};
+
+/* =========================================================
+   SÍNTESIS DE VOZ (Web Speech API)
+========================================================= */
+const Speech = {
+    synth:window.speechSynthesis,
+    speak(text){
+        if(!this.synth) return;
+        this.synth.cancel();
+        const u=new SpeechSynthesisUtterance(text);
+        u.lang='en-US'; u.rate=0.82; u.pitch=1.0;
+        this.synth.speak(u);
+    },
+    // Lee la frase con el hueco vacío: dice "blank" UNA sola vez por hueco,
+    // en un tono más agudo para que se note que es el espacio.
+    speakBlank(question){
+        if(!this.synth) return;
+        this.synth.cancel();
+        const parts=question.split(BLANK_RE);
+        parts.forEach((p,i)=>{
+            const clean=p.trim();
+            if(clean){ const u=new SpeechSynthesisUtterance(clean); u.lang='en-US'; u.rate=0.82; u.pitch=1.0; this.synth.speak(u); }
+            if(i<parts.length-1){ const b=new SpeechSynthesisUtterance('blank'); b.lang='en-US'; b.rate=0.78; b.pitch=1.7; this.synth.speak(b); }
+        });
+    }
+};
+
+/* =========================================================
+   DATOS — EL DÍA DE ARTHUR (12 entradas, 3 capítulos)
+   El contenido lingüístico se conserva; se reordena en un
+   viaje cronológico y se asigna a cada entrada un escenario.
+========================================================= */
+const CHAPTERS = [
+    { id:0, name:"Capítulo I", title:"El Amanecer",
+      text:"Cada historia comienza en la oscuridad antes de la luz. Arthur abre los ojos mucho antes que el resto del mundo. Ayúdame a revivir las primeras horas: el despertar, el agua, la ropa de siempre y el desayuno en familia.",
+      icon:"dawn",
+      vocab:[
+        {en:"First / Then / Finally", es:"conectores de secuencia: primero · luego · por último"},
+        {en:"I wake up at 4:30", es:"me despierto a las 4:30 (el sujeto «I» es obligatorio)"},
+        {en:"a blue jacket", es:"una chaqueta azul (adjetivo + sustantivo)"},
+        {en:"have breakfast", es:"desayunar (colocación fija con «have»)"}
+      ] },
+    { id:1, name:"Capítulo II", title:"La Universidad",
+      text:"Aquí late el corazón de su vida. Pasillos, árboles, una pizarra y decenas de estudiantes esperando. Reconstruyamos las horas en las que Arthur fue, sobre todo, un maestro.",
+      icon:"campus",
+      vocab:[
+        {en:"at 6:45 a.m.", es:"«at» para una hora exacta"},
+        {en:"in the morning", es:"por la mañana (parte del día: «in the…»)"},
+        {en:"an excellent class", es:"una clase excelente (adjetivo + sustantivo)"},
+        {en:"a delicious lunch", es:"un almuerzo delicioso"}
+      ] },
+    { id:2, name:"Capítulo III", title:"El Descanso",
+      text:"Cuando la luz se vuelve dorada y luego azul, llega la calma. Los exámenes, la noche silenciosa y, por fin, el merecido fin de semana. Cerremos juntos su diario.",
+      icon:"night",
+      vocab:[
+        {en:"Finally", es:"por último (cierra la secuencia del día)"},
+        {en:"at night", es:"por la noche (preposición fija)"},
+        {en:"professors work", es:"los profesores trabajan (sujeto plural → verbo base)"},
+        {en:"watch TV", es:"ver televisión"}
+      ] }
+];
+
+const LEVELS = [
+    // ---- Capítulo I — El Amanecer ----
+    { ch:0, scene:"bedroomDawn", time:"dawn",  title:"Las 4:30 de la madrugada",
+      instruction:"Elige el conector para iniciar el relato cronológico:",
+      question:"______ , I wake up at 4:30 a.m. Then, I wash my face.",
+      options:["Finally","Then","First","After that"], correct:"First",
+      hint:"Es la PRIMERA acción del día. ¿Qué palabra abre una secuencia?" },
+
+    { ch:0, scene:"bathroom", time:"earlyMorning", title:"Agua y vapor",
+      instruction:"Falta el sujeto explícito antes de la acción:",
+      question:"First, I take a shower. Then, ______ go to university.",
+      options:["You","I","He","They"], correct:"I",
+      hint:"Arthur habla de sí mismo. En inglés el sujeto nunca se omite." },
+
+    { ch:0, scene:"closet", time:"earlyMorning", title:"El ritual de los viernes",
+      instruction:"Ordena correctamente: ¿cómo se dice «chaqueta azul»?",
+      question:"To work with comfort, I wear a ______ ______ on Fridays.",
+      options:["jacket blue","blue jacket","bluees jacket","jacket blues"], correct:"blue jacket",
+      hint:"En inglés el adjetivo (color) va ANTES del sustantivo." },
+
+    { ch:0, scene:"kitchen", time:"morning", title:"Desayuno en familia",
+      instruction:"Elige la expresión natural en inglés para «tomar el desayuno»:",
+      question:"Every single morning, I ______ ______ with my family.",
+      options:["take breakfast","eat the breakfast","have breakfast","make breakfast"], correct:"have breakfast",
+      hint:"Es una colocación fija con el verbo «have»." },
+
+    // ---- Capítulo II — La Universidad ----
+    { ch:1, scene:"office", time:"sunrise", title:"Las puertas de la universidad",
+      instruction:"Indica la preposición obligatoria para horas exactas:",
+      question:"Every morning, I arrive at my office ______ 6:45 a.m.",
+      options:["on","in","at","to"], correct:"at",
+      hint:"Para una HORA exacta usamos siempre la misma preposición." },
+
+    { ch:1, scene:"campus", time:"morning", title:"Un paseo entre los árboles",
+      instruction:"Selecciona la estructura temporal correcta para «por la mañana»:",
+      question:"I love to walk inside the university campus ______ ______ ______.",
+      options:["in the morning","at morning","on the morning","in morning"], correct:"in the morning",
+      hint:"Partes del día: «in the…». Y no olvides el artículo." },
+
+    { ch:1, scene:"classroom", time:"morning", title:"Frente a la clase",
+      instruction:"Aplica el orden correcto para «clase excelente»:",
+      question:"Today, I teach an ______ ______ to my university students.",
+      options:["class excellent","excellent class","excellents class","class excellents"], correct:"excellent class",
+      hint:"Adjetivo + sustantivo, y los adjetivos no llevan plural." },
+
+    { ch:1, scene:"cafeteria", time:"midday", title:"El mediodía en la cafetería",
+      instruction:"Elige el orden correcto (adjetivo + sustantivo):",
+      question:"At 12:00 p.m., I eat a ______ ______ at the cafeteria.",
+      options:["lunch delicious","delicious lunch","deliciouses lunch","lunch big"], correct:"delicious lunch",
+      hint:"El adjetivo describe al almuerzo y va delante de él." },
+
+    { ch:1, scene:"library", time:"afternoon", title:"Camino a la biblioteca",
+      instruction:"En inglés el sujeto es obligatorio. Selecciona el correcto:",
+      question:"After that, I finish my classes. Then, ______ walk to the library.",
+      options:["walk","am","is","I"], correct:"I",
+      hint:"¿Quién camina? Necesitamos el sujeto de la oración." },
+
+    // ---- Capítulo III — El Descanso ----
+    { ch:2, scene:"officeEvening", time:"evening", title:"La tarde de los exámenes",
+      instruction:"Selecciona el conector que cierra la secuencia de eventos:",
+      question:"I check exams in the afternoon. ______ , I go to bed at 10:00 p.m.",
+      options:["First","Finally","Then","After that"], correct:"Finally",
+      hint:"Es la ÚLTIMA acción del día. ¿Qué palabra cierra una secuencia?" },
+
+    { ch:2, scene:"bedroomNight", time:"night", title:"Antes de dormir",
+      instruction:"Selecciona la preposición adecuada para «night»:",
+      question:"Finally, I check virtual platforms and sleep ______ ______.",
+      options:["in the night","on night","at night","in night"], correct:"at night",
+      hint:"«night» tiene una preposición fija y especial." },
+
+    { ch:2, scene:"livingRoom", time:"weekend", title:"El descanso del fin de semana",
+      instruction:"Identifica la forma correcta del verbo para sujetos plurales:",
+      question:"On Saturday and Sunday, professors relax, watch TV, and never ______.",
+      options:["work","works","working","worker"], correct:"work",
+      hint:"El sujeto es plural («professors»): el verbo va en forma base." }
+];
+
+/* =========================================================
+   MOTOR / ESTADO
+========================================================= */
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+const W=1000, H=700;
+
+const STATES={ START:'START', CHAPTER:'CHAPTER', PRETASK:'PRETASK', PLAYING:'PLAYING', FEEDBACK:'FEEDBACK', PRODUCTION:'PRODUCTION', GAMEOVER:'GAMEOVER', VICTORY:'VICTORY' };
+let state=STATES.START;
+
+let score=0, streak=1, maxStreak=1, idx=0;
+// --- Bucle de dominio ---
+let queue=[];            // índices de entradas pendientes del capítulo actual
+let mastered=0;          // recuerdos restaurados en total
+let curChapter=0;        // capítulo en curso
+let optOrder=[0,1,2,3];  // orden barajado de las opciones de la entrada actual
+let failCount={};        // fallos por entrada (para andamiaje progresivo)
+let vocabSeen=[];        // tarjetas de la pre-tarea ya exploradas
+let highScore=500; try{ highScore=parseInt(localStorage.getItem('arthur_high')||'500'); }catch(e){}
+
+let feedbackTimer=0; const FEEDBACK_DUR=150;
+let selected=-1, isCorrect=false;
+let hovered=-1;
+let particles=[];
+let shake=0, shakeMag=0;
+let tick=0;                 // reloj de animación
+let fade=0;                 // 0..1 transición de entrada de escena
+let clarity=0;              // nitidez del recuerdo (0 borroso .. 1 nítido)
+let reveal=0;               // typewriter de la respuesta correcta
+let hintOn=false;
+let introChapter=0;         // capítulo a presentar en estado CHAPTER
+
+let mx=0,my=0, hoverInteractive=false, clickX=0, clickY=0;
+
+/* layout */
+const HUD={x:0,y:0,w:W,h:56};
+const SCENE={x:0,y:56,w:W,h:320};
+const PAGE={x:34,y:392,w:W-68,h:284};
+const optBtns=[];
+(function(){
+    const n=4, gap=16, innerX=PAGE.x+26, innerW=PAGE.w-52;
+    const bw=(innerW-gap*(n-1))/n, bh=66, y=PAGE.y+PAGE.h-bh-26;
+    for(let i=0;i<n;i++) optBtns.push({x:innerX+i*(bw+gap), y, w:bw, h:bh});
+})();
+const speakerBtn={x:PAGE.x+PAGE.w-52, y:PAGE.y+20, w:38, h:38};
+const hintBtn   ={x:PAGE.x+PAGE.w-100, y:PAGE.y+20, w:38, h:38};
+const mainBtn={x:W/2-170, y:560, w:340, h:74};
+
+/* =========================================================
+   UTILIDADES
+========================================================= */
+function mouse(e){ const r=canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)*(W/r.width), y:(e.clientY-r.top)*(H/r.height)}; }
+function inside(px,py,b){ return px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h; }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+// Reconoce uno o varios "______" seguidos como un ÚNICO hueco.
+const BLANK_RE=/_{2,}(?:\s+_{2,})*/g;
+function fillBlank(question, replacement){ return question.replace(BLANK_RE, replacement); }
+
+function sentenceWith(word){
+    return fillBlank(LEVELS[idx].question, word);
+}
+function optText(i){ return LEVELS[idx].options[optOrder[i]]; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+/* =========================================================
+   CIELO Y ATMÓSFERA
+========================================================= */
+const SKY={
+    dawn:{        a:'#161634', b:'#4b3a6e', c:'#e0824a', body:'moon', stars:.7 },
+    earlyMorning:{a:'#5e87bd', b:'#a9c7e4', c:'#f4e0bd', body:'sun',  stars:0  },
+    morning:{     a:'#3f7fc4', b:'#8cc0ec', c:'#d7eef9', body:'sun',  stars:0  },
+    sunrise:{     a:'#34406f', b:'#d98a4e', c:'#ffce8a', body:'sun',  stars:.15},
+    midday:{      a:'#2f7ed1', b:'#74bdf0', c:'#cfeaf8', body:'sun',  stars:0  },
+    afternoon:{   a:'#5b86bd', b:'#e6ac63', c:'#f6dca0', body:'sun',  stars:0  },
+    evening:{     a:'#241f50', b:'#8a4674', c:'#e88a52', body:'sun',  stars:.3 },
+    night:{       a:'#070722', b:'#141442', c:'#28285a', body:'moon', stars:1  },
+    weekend:{     a:'#4f80bd', b:'#9cc4e6', c:'#e8d6b0', body:'sun',  stars:0  }
+};
+
+function drawSky(x,y,w,h,timeId,clip){
+    const s=SKY[timeId]||SKY.morning;
+    ctx.save();
+    if(clip){ rr(x,y,w,h,4); ctx.clip(); }
+    const g=ctx.createLinearGradient(0,y,0,y+h);
+    g.addColorStop(0,s.a); g.addColorStop(.55,s.b); g.addColorStop(1,s.c);
+    ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+
+    // estrellas
+    if(s.stars>0){
+        for(let i=0;i<40;i++){
+            const sx=x+((i*73.3)%w), sy=y+((i*131.7)%(h*0.7));
+            const tw=0.5+0.5*Math.sin(tick*0.05+i);
+            ctx.globalAlpha=s.stars*tw*0.9;
+            ctx.fillStyle='#fff'; ctx.fillRect(sx,sy,1.6,1.6);
+        }
+        ctx.globalAlpha=1;
+    }
+    // astro
+    const bx=x+w*0.74, by=y+h*0.34;
+    if(s.body==='sun'){
+        const gg=ctx.createRadialGradient(bx,by,2,bx,by,40);
+        gg.addColorStop(0,'rgba(255,244,200,.9)'); gg.addColorStop(1,'rgba(255,210,120,0)');
+        ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(bx,by,40,0,7); ctx.fill();
+        ctx.fillStyle='#fff3c4'; ctx.beginPath(); ctx.arc(bx,by,15,0,7); ctx.fill();
+    } else if(s.body==='moon'){
+        const gg=ctx.createRadialGradient(bx,by,2,bx,by,30);
+        gg.addColorStop(0,'rgba(230,235,255,.5)'); gg.addColorStop(1,'rgba(230,235,255,0)');
+        ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(bx,by,30,0,7); ctx.fill();
+        ctx.fillStyle='#eef0ff'; ctx.beginPath(); ctx.arc(bx,by,13,0,7); ctx.fill();
+        ctx.fillStyle=s.a; ctx.beginPath(); ctx.arc(bx+6,by-3,12,0,7); ctx.fill(); // luna creciente
+    }
+    // nubes (no de noche)
+    if(timeId!=='night'&&timeId!=='dawn'){
+        ctx.fillStyle='rgba(255,255,255,.55)';
+        for(let i=0;i<3;i++){
+            const cw=70+i*18;
+            let cx=x + ((tick*0.25 + i*260) % (w+200)) - 120;
+            const cy=y+h*0.2+i*22;
+            cloud(cx,cy,cw*0.5);
+        }
+    }
+    ctx.restore();
+}
+function cloud(cx,cy,r){
+    ctx.beginPath();
+    ctx.arc(cx,cy,r*0.6,0,7); ctx.arc(cx+r*0.55,cy+4,r*0.5,0,7);
+    ctx.arc(cx-r*0.55,cy+4,r*0.45,0,7); ctx.arc(cx+r*0.1,cy-r*0.2,r*0.5,0,7);
+    ctx.fill();
+}
+
+/* ventana en una pared */
+function window2(x,y,w,h,timeId){
+    ctx.save();
+    ctx.fillStyle='#7a5a38'; ctx.fillRect(x-8,y-8,w+16,h+16); // marco
+    drawSky(x,y,w,h,timeId,true);
+    ctx.strokeStyle='#5a4226'; ctx.lineWidth=5;
+    ctx.strokeRect(x,y,w,h);
+    ctx.beginPath(); ctx.moveTo(x+w/2,y); ctx.lineTo(x+w/2,y+h);
+    ctx.moveTo(x,y+h/2); ctx.lineTo(x+w,y+h/2); ctx.stroke();
+    // reflejo
+    ctx.strokeStyle='rgba(255,255,255,.2)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x+8,y+h-8); ctx.lineTo(x+w*0.45,y+8); ctx.stroke();
+    ctx.restore();
+}
+
+/* =========================================================
+   ESCENARIOS  (cada uno cuenta una hora del día de Arthur)
+   Todos pintan dentro del rect SCENE.
+========================================================= */
+function room(wallTop,wallBot,floor){
+    const fy=SCENE.y+SCENE.h*0.66;
+    const g=ctx.createLinearGradient(0,SCENE.y,0,fy);
+    g.addColorStop(0,wallTop); g.addColorStop(1,wallBot);
+    ctx.fillStyle=g; ctx.fillRect(SCENE.x,SCENE.y,SCENE.w,fy-SCENE.y);
+    ctx.fillStyle=floor; ctx.fillRect(SCENE.x,fy,SCENE.w,SCENE.y+SCENE.h-fy);
+    ctx.fillStyle='rgba(0,0,0,.12)'; ctx.fillRect(SCENE.x,fy-4,SCENE.w,4); // zócalo
+    return fy;
+}
+function lamp(x,y,glow){ // lámpara de pie cálida
+    ctx.strokeStyle='#6b4f30'; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+70); ctx.stroke();
+    ctx.fillStyle='#3a2c18'; ctx.fillRect(x-14,y+70,28,8);
+    if(glow){ const gg=ctx.createRadialGradient(x,y-6,2,x,y-6,55); gg.addColorStop(0,'rgba(255,210,120,.55)'); gg.addColorStop(1,'rgba(255,210,120,0)'); ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(x,y-6,55,0,7); ctx.fill(); }
+    ctx.fillStyle=glow?'#ffe6a6':'#c9b58a'; ctx.beginPath(); ctx.moveTo(x-20,y); ctx.lineTo(x+20,y); ctx.lineTo(x+13,y-20); ctx.lineTo(x-13,y-20); ctx.closePath(); ctx.fill();
+}
+function plant(x,fy){ ctx.fillStyle='#7a4a26'; ctx.fillRect(x-12,fy-22,24,22); ctx.fillStyle='#3f7a44'; for(let i=0;i<5;i++){ ctx.beginPath(); ctx.ellipse(x-12+i*6,fy-22-14,5,16,(i-2)*0.4,0,7); ctx.fill(); } }
+function rug(cx,fy,w){ ctx.fillStyle='rgba(150,60,50,.55)'; ctx.beginPath(); ctx.ellipse(cx,fy+34,w,18,0,0,7); ctx.fill(); }
+
+function scene_bedroomDawn(){
+    const fy=room('#3a3458','#5a4a6a','#4a3a42');
+    window2(560,SCENE.y+34,180,120,'dawn');
+    // cama
+    ctx.fillStyle='#5a3f5a'; ctx.fillRect(120,fy-46,320,46);
+    ctx.fillStyle='#8a6a8a'; ctx.fillRect(120,fy-70,90,28); // cabecera
+    ctx.fillStyle='#e8dcd0'; ctx.fillRect(150,fy-58,90,22); // almohada
+    ctx.fillStyle='#b56a6a'; ctx.beginPath(); ctx.moveTo(230,fy-46); ctx.lineTo(440,fy-46); ctx.lineTo(440,fy-20); ctx.lineTo(230,fy-30); ctx.closePath(); ctx.fill(); // cobija
+    // mesita + reloj despertador
+    ctx.fillStyle='#5a4226'; ctx.fillRect(470,fy-50,60,50);
+    ctx.fillStyle='#1a1a2a'; ctx.fillRect(482,fy-72,36,22); ctx.fillStyle='#ff5a4a'; ctx.font='bold 12px monospace'; ctx.textAlign='center'; ctx.fillText("4:30",500,fy-57);
+    lamp(820,fy-70,true);
+}
+function scene_bathroom(){
+    const fy=room('#3a6a78','#6aa0aa','#cfe0e6');
+    window2(610,SCENE.y+30,150,110,'earlyMorning');
+    // azulejos
+    ctx.strokeStyle='rgba(255,255,255,.18)'; ctx.lineWidth=1;
+    for(let x=SCENE.x;x<SCENE.w;x+=40){ ctx.beginPath(); ctx.moveTo(x,SCENE.y); ctx.lineTo(x,fy); ctx.stroke(); }
+    for(let y=SCENE.y;y<fy;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    // ducha
+    ctx.fillStyle='#8aa6ae'; ctx.fillRect(120,SCENE.y+30,200,fy-SCENE.y-30);
+    ctx.fillStyle='#cfe6ec'; ctx.globalAlpha=.4; ctx.fillRect(120,SCENE.y+30,200,fy-SCENE.y-30); ctx.globalAlpha=1;
+    ctx.strokeStyle='#5a7a82'; ctx.lineWidth=4; ctx.strokeRect(120,SCENE.y+30,200,fy-SCENE.y-30);
+    ctx.fillStyle='#c0d0d6'; ctx.fillRect(200,SCENE.y+20,40,16); // alcachofa
+    ctx.strokeStyle='rgba(180,210,220,.6)'; ctx.lineWidth=2;
+    for(let i=0;i<6;i++){ ctx.beginPath(); ctx.moveTo(206+i*5,SCENE.y+36); ctx.lineTo(206+i*5+((tick*0.3+i*7)%30)*0.2,fy-20); ctx.stroke(); }
+    // lavamanos
+    ctx.fillStyle='#e8eef0'; ctx.fillRect(420,fy-40,90,40); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.ellipse(465,fy-40,40,12,0,0,7); ctx.fill();
+}
+function scene_closet(){
+    const fy=room('#5a3f2a','#7a5a3a','#4a3322');
+    // armario
+    ctx.fillStyle='#6b4a2a'; ctx.fillRect(110,SCENE.y+30,360,fy-SCENE.y-30);
+    ctx.strokeStyle='#3a2614'; ctx.lineWidth=4; ctx.strokeRect(110,SCENE.y+30,360,fy-SCENE.y-30);
+    ctx.beginPath(); ctx.moveTo(290,SCENE.y+30); ctx.lineTo(290,fy); ctx.stroke();
+    // barra y ropa
+    ctx.strokeStyle='#caa86a'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(125,SCENE.y+55); ctx.lineTo(280,SCENE.y+55); ctx.stroke();
+    const cols=['#b54a3a','#3a6ab5','#caa84a','#4a9a5a','#7a4a9a'];
+    cols.forEach((c,i)=>{ const x=140+i*28; ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(x,SCENE.y+58); ctx.lineTo(x+18,SCENE.y+58); ctx.lineTo(x+22,fy-30); ctx.lineTo(x-4,fy-30); ctx.closePath(); ctx.fill(); ctx.strokeStyle='#caa86a'; ctx.beginPath(); ctx.moveTo(x+5,SCENE.y+55); ctx.lineTo(x+9,SCENE.y+58); ctx.stroke(); });
+    // chaqueta azul destacada en gancho a la derecha
+    ctx.strokeStyle='#caa86a'; ctx.beginPath(); ctx.moveTo(560,SCENE.y+60); ctx.lineTo(560,SCENE.y+45); ctx.stroke();
+    ctx.fillStyle='#2f5fb0'; ctx.beginPath(); ctx.moveTo(560,SCENE.y+60); ctx.lineTo(540,SCENE.y+90); ctx.lineTo(545,fy-40); ctx.lineTo(575,fy-40); ctx.lineTo(580,SCENE.y+90); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#27509a'; ctx.fillRect(553,SCENE.y+62,14,fy-SCENE.y-102);
+    plant(700,fy);
+}
+function scene_kitchen(){
+    const fy=room('#caa86a','#e0c890','#8a6a4a');
+    window2(610,SCENE.y+30,150,110,'morning');
+    // mesón + estufa
+    ctx.fillStyle='#7a5a3a'; ctx.fillRect(100,fy-58,260,58);
+    ctx.fillStyle='#5a4226'; ctx.fillRect(100,fy-66,260,10);
+    ctx.fillStyle='#3a3a44'; ctx.fillRect(150,fy-78,70,16); // estufa
+    for(let i=0;i<2;i++){ ctx.strokeStyle='#ff7a4a'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(165+i*40,fy-70,6,0,7); ctx.stroke(); }
+    // mesa con desayuno (taza humeante)
+    ctx.fillStyle='#8a6a4a'; ctx.fillRect(470,fy-30,140,30); ctx.fillStyle='#5a4226'; ctx.fillRect(510,fy,12,SCENE.y+SCENE.h-fy);
+    ctx.fillStyle='#e8e0d4'; ctx.fillRect(500,fy-44,28,16); ctx.beginPath(); ctx.arc(530,fy-36,6,-1.6,1.6); ctx.stroke();
+    ctx.strokeStyle='rgba(220,220,220,.6)'; ctx.lineWidth=2; for(let i=0;i<2;i++){ ctx.beginPath(); ctx.moveTo(512+i*6,fy-46); ctx.bezierCurveTo(508+i*6,fy-58,520+i*6,fy-62,514+i*6,fy-74); ctx.stroke(); }
+    ctx.fillStyle='#caa84a'; ctx.fillRect(548,fy-40,40,12); // pan tostado
+}
+function scene_office(){
+    const fy=room('#6a5a4a','#8a7a64','#5a4632');
+    window2(580,SCENE.y+30,170,120,'sunrise');
+    // estantería
+    ctx.fillStyle='#5a3f24'; ctx.fillRect(100,SCENE.y+30,150,fy-SCENE.y-30);
+    for(let r=0;r<3;r++){ const yy=SCENE.y+60+r*((fy-SCENE.y-50)/3); ctx.fillStyle='#3a2614'; ctx.fillRect(100,yy,150,6); const cb=['#b54a3a','#3a6ab5','#caa84a','#4a9a5a','#9a4a7a']; for(let b=0;b<6;b++){ ctx.fillStyle=cb[(r+b)%cb.length]; ctx.fillRect(108+b*22,yy-26,16,26); } }
+    // escritorio
+    ctx.fillStyle='#6b4a2a'; ctx.fillRect(360,fy-40,220,40); ctx.fillStyle='#4a3322'; ctx.fillRect(370,fy,12,SCENE.y+SCENE.h-fy); ctx.fillRect(560,fy,12,SCENE.y+SCENE.h-fy);
+    ctx.fillStyle='#e8e0d0'; ctx.fillRect(400,fy-52,40,12); // papeles
+    lamp(540,fy-40,true);
+}
+function scene_campus(){
+    // exterior
+    drawSky(SCENE.x,SCENE.y,SCENE.w,SCENE.h*0.62,'morning',false);
+    const fy=SCENE.y+SCENE.h*0.62;
+    ctx.fillStyle='#5a8a4a'; ctx.fillRect(SCENE.x,fy,SCENE.w,SCENE.y+SCENE.h-fy); // césped
+    // edificio universitario
+    ctx.fillStyle='#cbb089'; ctx.fillRect(60,fy-130,260,130);
+    ctx.fillStyle='#a9905f'; for(let r=0;r<3;r++) for(let c=0;c<4;c++){ ctx.fillRect(80+c*60,fy-118+r*38,40,26); }
+    ctx.fillStyle='#7a5a3a'; ctx.fillRect(170,fy-50,40,50); // puerta
+    ctx.fillStyle='#caa84a'; ctx.beginPath(); ctx.moveTo(50,fy-130); ctx.lineTo(330,fy-130); ctx.lineTo(190,fy-170); ctx.closePath(); ctx.fill(); // techo
+    // camino
+    ctx.fillStyle='#c9bfa6'; ctx.beginPath(); ctx.moveTo(W*0.4,fy); ctx.lineTo(W*0.6,fy); ctx.lineTo(W*0.78,SCENE.y+SCENE.h); ctx.lineTo(W*0.22,SCENE.y+SCENE.h); ctx.closePath(); ctx.fill();
+    // árboles
+    [620,760,880].forEach((x,i)=>{ const ty=fy-10-i*4; ctx.fillStyle='#6b4a2a'; ctx.fillRect(x-7,ty-50,14,60); ctx.fillStyle=i%2?'#3f7a44':'#4f8a4f'; ctx.beginPath(); ctx.arc(x,ty-60,34,0,7); ctx.arc(x-22,ty-46,24,0,7); ctx.arc(x+22,ty-46,24,0,7); ctx.fill(); });
+}
+function scene_classroom(){
+    const fy=room('#6a6450','#8a8468','#5a5040');
+    // pizarra
+    ctx.fillStyle='#2a3a2e'; ctx.fillRect(120,SCENE.y+30,420,150); ctx.strokeStyle='#7a5a3a'; ctx.lineWidth=8; ctx.strokeRect(120,SCENE.y+30,420,150);
+    ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(150,SCENE.y+70); ctx.lineTo(330,SCENE.y+70); ctx.moveTo(150,SCENE.y+100); ctx.lineTo(420,SCENE.y+100); ctx.moveTo(150,SCENE.y+130); ctx.lineTo(360,SCENE.y+130); ctx.stroke();
+    ctx.font='italic 18px Fraunces, serif'; ctx.fillStyle='rgba(255,255,255,.85)'; ctx.textAlign='left'; ctx.fillText("Present Simple", 360, SCENE.y+55);
+    // pupitres
+    for(let i=0;i<3;i++){ const x=620+i*100, y=fy-20-i*6; ctx.fillStyle='#7a5a3a'; ctx.fillRect(x,y-30,70,12); ctx.fillStyle='#5a4226'; ctx.fillRect(x+6,y-18,8,26); ctx.fillRect(x+56,y-18,8,26); }
+    window2(620,SCENE.y+34,150,90,'morning');
+}
+function scene_cafeteria(){
+    const fy=room('#caa860','#e6cd92','#9a7a5a');
+    window2(120,SCENE.y+28,220,150,'midday');
+    // barra
+    ctx.fillStyle='#9a6a3a'; ctx.fillRect(420,fy-46,420,46); ctx.fillStyle='#7a5028'; ctx.fillRect(420,fy-54,420,10);
+    // bandeja con plato
+    ctx.fillStyle='#cfd6da'; ctx.fillRect(470,fy-66,120,16); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(530,fy-58,26,0,7); ctx.fill();
+    ctx.fillStyle='#b54a3a'; ctx.beginPath(); ctx.arc(522,fy-60,8,0,7); ctx.fill(); ctx.fillStyle='#4f8a4f'; ctx.beginPath(); ctx.arc(540,fy-56,7,0,7); ctx.fill(); ctx.fillStyle='#caa84a'; ctx.beginPath(); ctx.arc(534,fy-66,7,0,7); ctx.fill();
+    // mesa frente
+    ctx.fillStyle='#8a6a4a'; ctx.fillRect(600,fy+6,160,16); ctx.fillStyle='#5a4226'; ctx.fillRect(640,fy+22,10,SCENE.y+SCENE.h-fy-22); ctx.fillRect(710,fy+22,10,SCENE.y+SCENE.h-fy-22);
+}
+function scene_library(){
+    // exterior tarde camino a la biblioteca
+    drawSky(SCENE.x,SCENE.y,SCENE.w,SCENE.h*0.6,'afternoon',false);
+    const fy=SCENE.y+SCENE.h*0.6;
+    ctx.fillStyle='#6a8a4a'; ctx.fillRect(SCENE.x,fy,SCENE.w,SCENE.y+SCENE.h-fy);
+    // biblioteca (columnas clásicas)
+    ctx.fillStyle='#d8c9a8'; ctx.fillRect(520,fy-150,400,150);
+    ctx.fillStyle='#c9b78f'; for(let i=0;i<5;i++){ ctx.fillRect(540+i*78,fy-130,30,130); }
+    ctx.fillStyle='#bca374'; ctx.fillRect(510,fy-170,420,24); // arquitrabe
+    ctx.fillStyle='#caa84a'; ctx.beginPath(); ctx.moveTo(500,fy-170); ctx.lineTo(940,fy-170); ctx.lineTo(720,fy-205); ctx.closePath(); ctx.fill(); // frontón
+    ctx.fillStyle='#7a5a3a'; ctx.font='bold 13px Outfit'; ctx.textAlign='center'; ctx.fillText("LIBRARY",720,fy-152);
+    // escalones
+    ctx.fillStyle='#c9bfa6'; for(let i=0;i<3;i++) ctx.fillRect(540-i*14,fy-i*10,360+i*28,12);
+    // camino
+    ctx.fillStyle='#c9bfa6'; ctx.beginPath(); ctx.moveTo(W*0.42,fy); ctx.lineTo(W*0.58,fy); ctx.lineTo(W*0.72,SCENE.y+SCENE.h); ctx.lineTo(W*0.28,SCENE.y+SCENE.h); ctx.closePath(); ctx.fill();
+    [120,230].forEach((x,i)=>{ const ty=fy; ctx.fillStyle='#6b4a2a'; ctx.fillRect(x-6,ty-44,12,50); ctx.fillStyle='#c98a4a'; ctx.beginPath(); ctx.arc(x,ty-54,28,0,7); ctx.fill(); }); // árboles otoñales
+}
+function scene_officeEvening(){
+    const fy=room('#3a3450','#5a4a58','#3a2c30');
+    window2(580,SCENE.y+30,170,120,'evening');
+    // escritorio con pila de exámenes y lámpara encendida
+    ctx.fillStyle='#5a3f24'; ctx.fillRect(120,fy-44,260,44); ctx.fillStyle='#3a2614'; ctx.fillRect(135,fy,12,SCENE.y+SCENE.h-fy); ctx.fillRect(360,fy,12,SCENE.y+SCENE.h-fy);
+    for(let i=0;i<5;i++){ ctx.fillStyle=i%2?'#efe6d2':'#e2d6bc'; ctx.fillRect(150+i*3,fy-54-i*5,80,8); } // pila papeles
+    ctx.fillStyle='#caa84a'; ctx.fillRect(300,fy-58,30,40); // taza/reloj
+    lamp(330,fy-44,true);
+    // silla
+    ctx.fillStyle='#5a3f24'; ctx.fillRect(420,fy-70,16,70); ctx.fillRect(420,fy-12,60,12);
+}
+function scene_bedroomNight(){
+    const fy=room('#0e0e2a','#23234a','#1a1424');
+    window2(560,SCENE.y+30,180,130,'night');
+    // luz de luna en el piso
+    ctx.fillStyle='rgba(180,190,255,.10)'; ctx.beginPath(); ctx.moveTo(580,fy); ctx.lineTo(740,fy); ctx.lineTo(700,SCENE.y+SCENE.h); ctx.lineTo(540,SCENE.y+SCENE.h); ctx.closePath(); ctx.fill();
+    // cama
+    ctx.fillStyle='#2a2440'; ctx.fillRect(120,fy-46,320,46); ctx.fillStyle='#3a3458'; ctx.fillRect(120,fy-72,90,30);
+    ctx.fillStyle='#cfcadf'; ctx.fillRect(150,fy-60,90,22);
+    ctx.fillStyle='#4a3a6a'; ctx.beginPath(); ctx.moveTo(230,fy-46); ctx.lineTo(440,fy-46); ctx.lineTo(440,fy-22); ctx.lineTo(230,fy-30); ctx.closePath(); ctx.fill();
+    // portátil tenue (plataformas virtuales)
+    ctx.fillStyle='#5a4226'; ctx.fillRect(470,fy-44,60,44);
+    ctx.fillStyle='#3a4a6a'; ctx.fillRect(478,fy-66,46,24); ctx.fillStyle='rgba(120,180,255,.6)'; ctx.fillRect(481,fy-63,40,18);
+}
+function scene_livingRoom(){
+    const fy=room('#9a7a5a','#bfa07a','#7a5a3a');
+    window2(610,SCENE.y+30,150,110,'weekend');
+    // sofá
+    ctx.fillStyle='#8a4a4a'; ctx.fillRect(90,fy-58,250,58); ctx.fillStyle='#9a5a5a'; ctx.fillRect(90,fy-84,250,30);
+    ctx.fillStyle='#a96a6a'; ctx.fillRect(90,fy-58,28,58); ctx.fillRect(312,fy-58,28,58);
+    ctx.fillStyle='#caa84a'; ctx.fillRect(150,fy-78,40,28); ctx.fillStyle='#4f8a8a'; ctx.fillRect(230,fy-78,40,28); // cojines
+    // TV encendida
+    ctx.fillStyle='#1a1a22'; ctx.fillRect(430,fy-110,200,120); ctx.fillStyle='#5a3f24'; ctx.fillRect(500,fy+10,60,16);
+    const tg=ctx.createLinearGradient(440,fy-100,620,fy); tg.addColorStop(0,'#4a90d9'); tg.addColorStop(1,'#9a5ad9');
+    ctx.fillStyle=tg; ctx.fillRect(440,fy-100,180,100);
+    ctx.fillStyle='rgba(255,255,255,.25)'; ctx.fillRect(440+((tick*1.5)%180),fy-100,18,100);
+    rug((90+340)/2,fy,150);
+}
+const SCENES={ bedroomDawn:scene_bedroomDawn, bathroom:scene_bathroom, closet:scene_closet, kitchen:scene_kitchen,
+    office:scene_office, campus:scene_campus, classroom:scene_classroom, cafeteria:scene_cafeteria, library:scene_library,
+    officeEvening:scene_officeEvening, bedroomNight:scene_bedroomNight, livingRoom:scene_livingRoom };
+
+/* velo de "recuerdo borroso": cuanto menor la nitidez, más sepia/oscuro */
+function memoryVeil(c){
+    ctx.save(); rr(SCENE.x,SCENE.y,SCENE.w,SCENE.h,4); ctx.clip();
+    ctx.globalAlpha=(1-c)*0.78; ctx.fillStyle='#2a2114'; ctx.fillRect(SCENE.x,SCENE.y,SCENE.w,SCENE.h);
+    ctx.globalAlpha=(1-c)*0.35; ctx.fillStyle='#d8b870'; ctx.fillRect(SCENE.x,SCENE.y,SCENE.w,SCENE.h);
+    ctx.globalAlpha=1;
+    // viñeta
+    const v=ctx.createRadialGradient(SCENE.x+SCENE.w/2,SCENE.y+SCENE.h/2,120,SCENE.x+SCENE.w/2,SCENE.y+SCENE.h/2,SCENE.w*0.6);
+    v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,.45)');
+    ctx.fillStyle=v; ctx.fillRect(SCENE.x,SCENE.y,SCENE.w,SCENE.h);
+    // motas de polvo dorado (memoria) cuando aún no es nítido
+    if(c<0.98){ for(let i=0;i<14;i++){ const px=SCENE.x+((i*97+tick*0.6)%SCENE.w); const py=SCENE.y+((i*61+tick*0.4)%SCENE.h); ctx.globalAlpha=(0.3+0.3*Math.sin(tick*0.04+i))*(1-c); ctx.fillStyle='#f0d28a'; ctx.beginPath(); ctx.arc(px,py,1.6,0,7); ctx.fill(); } ctx.globalAlpha=1; }
+    ctx.restore();
+}
+
+/* =========================================================
+   EL PROFESOR ARTHUR  (figura completa de pie)
+========================================================= */
+function drawProfessor(feetX, feetY, scale, emotion){
+    ctx.save(); ctx.translate(feetX,feetY); ctx.scale(scale,scale);
+    const dancing=(emotion==='dance');
+    const dp=tick*0.18;
+    if(dancing){ ctx.translate(0, -Math.abs(Math.sin(dp))*11); ctx.rotate(Math.sin(dp)*0.11); }
+    const bob=Math.sin(tick*0.045)*2;
+    const headX=0, headY=-150+bob;
+
+    // sombra
+    ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(0,4,34,8,0,0,7); ctx.fill();
+    // piernas
+    ctx.strokeStyle='#3a3142'; ctx.lineWidth=15; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-12,-58); ctx.lineTo(-13,-4); ctx.moveTo(12,-58); ctx.lineTo(13,-4); ctx.stroke();
+    // zapatos
+    ctx.fillStyle='#241a12'; ctx.beginPath(); ctx.ellipse(-15,-2,14,7,0,0,7); ctx.ellipse(15,-2,14,7,0,0,7); ctx.fill();
+    // torso / chaqueta tweed
+    ctx.fillStyle='#7a5a38'; ctx.beginPath(); ctx.moveTo(-30,-60); ctx.quadraticCurveTo(-34,-118,-22,-128); ctx.lineTo(22,-128); ctx.quadraticCurveTo(34,-118,30,-60); ctx.quadraticCurveTo(0,-50,-30,-60); ctx.closePath(); ctx.fill();
+    // textura tweed
+    ctx.strokeStyle='rgba(60,40,20,.3)'; ctx.lineWidth=1; for(let i=-26;i<28;i+=7){ ctx.beginPath(); ctx.moveTo(i,-122); ctx.lineTo(i,-60); ctx.stroke(); }
+    // solapas + camisa
+    ctx.fillStyle='#efe7d6'; ctx.beginPath(); ctx.moveTo(-10,-128); ctx.lineTo(10,-128); ctx.lineTo(4,-92); ctx.lineTo(-4,-92); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#5a4030'; ctx.beginPath(); ctx.moveTo(-22,-128); ctx.lineTo(-6,-126); ctx.lineTo(-12,-100); ctx.closePath(); ctx.moveTo(22,-128); ctx.lineTo(6,-126); ctx.lineTo(12,-100); ctx.closePath(); ctx.fill();
+    // pajarita
+    ctx.fillStyle='#9a2a2a'; ctx.beginPath(); ctx.moveTo(-12,-124); ctx.lineTo(-2,-119); ctx.lineTo(-12,-114); ctx.closePath(); ctx.moveTo(12,-124); ctx.lineTo(2,-119); ctx.lineTo(12,-114); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#7a1f1f'; ctx.beginPath(); ctx.arc(0,-119,3,0,7); ctx.fill();
+    // brazos (se alternan hacia arriba cuando Arthur baila)
+    let lHx=-34,lHy=-66,rHx=34,rHy=-66, lEx=-40,lEy=-86, rEx=40,rEy=-86;
+    if(dancing){ const up=Math.sin(dp);
+        if(up>0){ lHy=-66-up*64; lHx=-30-up*6; lEx=-30; lEy=-104; }
+        else { rHy=-66+up*64; rHx=30-up*6; rEx=30; rEy=-104; }
+    }
+    ctx.strokeStyle='#7a5a38'; ctx.lineWidth=12;
+    ctx.beginPath(); ctx.moveTo(-28,-110); ctx.quadraticCurveTo(lEx,lEy,lHx,lHy); ctx.moveTo(28,-110); ctx.quadraticCurveTo(rEx,rEy,rHx,rHy); ctx.stroke();
+    ctx.fillStyle='#e8c79a'; ctx.beginPath(); ctx.arc(lHx,lHy,6,0,7); ctx.arc(rHx,rHy,6,0,7); ctx.fill();
+
+    // cuello
+    ctx.fillStyle='#e0b888'; ctx.fillRect(-6,-138,12,14);
+    // cabeza
+    ctx.fillStyle='#ecc89a'; ctx.beginPath(); ctx.arc(headX,headY,22,0,7); ctx.fill();
+    ctx.strokeStyle='#c79a5e'; ctx.lineWidth=1.5; ctx.stroke();
+    // orejas
+    ctx.fillStyle='#e0b888'; ctx.beginPath(); ctx.arc(-21,headY,4,0,7); ctx.arc(21,headY,4,0,7); ctx.fill();
+    // cabello cano (calva con laterales) y cejas
+    ctx.fillStyle='#e8e6e0'; ctx.beginPath(); ctx.arc(headX,headY-6,22,Math.PI*1.08,Math.PI*1.92); ctx.fill();
+    ctx.beginPath(); ctx.arc(-19,headY-2,5,0,7); ctx.arc(19,headY-2,5,0,7); ctx.fill();
+    ctx.strokeStyle='#cfcabf'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-15,headY-9); ctx.lineTo(-5,headY-10); ctx.moveTo(15,headY-9); ctx.lineTo(5,headY-10); ctx.stroke();
+    // gafas redondas
+    ctx.strokeStyle='#2a221a'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(-8,headY-2,7,0,7); ctx.arc(8,headY-2,7,0,7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-1,headY-2); ctx.lineTo(1,headY-2); ctx.stroke();
+    // ojos que siguen al cursor
+    const ang=Math.atan2(my-(feetY+headY*scale), mx-(feetX+headX*scale));
+    const px=Math.cos(ang)*2.4, py=Math.sin(ang)*2.4;
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(-8,headY-2,3.4,0,7); ctx.arc(8,headY-2,3.4,0,7); ctx.fill();
+    ctx.fillStyle='#2a221a'; ctx.beginPath(); ctx.arc(-8+px,headY-2+py,1.8,0,7); ctx.arc(8+px,headY-2+py,1.8,0,7); ctx.fill();
+    // nariz
+    ctx.strokeStyle='#c79a5e'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(0,headY); ctx.lineTo(-2,headY+5); ctx.lineTo(1,headY+5); ctx.stroke();
+    // bigote/barba corta cana
+    ctx.fillStyle='#eeece6'; ctx.beginPath(); ctx.arc(0,headY+10,9,0,Math.PI); ctx.fill();
+    // boca según emoción
+    ctx.strokeStyle='#7a4a3a'; ctx.lineWidth=2; ctx.beginPath();
+    if(emotion==='happy'||emotion==='dance') ctx.arc(0,headY+8,6,0.15,Math.PI-0.15);
+    else if(emotion==='sad') ctx.arc(0,headY+15,6,Math.PI+0.2,-0.2);
+    else if(emotion==='talking'){ ctx.ellipse(0,headY+10,4,2.5+Math.abs(Math.sin(tick*0.2))*1.5,0,0,7); }
+    else { ctx.moveTo(-5,headY+10); ctx.lineTo(5,headY+10); }
+    ctx.stroke();
+    // notas musicales que suben mientras baila
+    if(dancing){ ctx.fillStyle='#e8c878'; ctx.font='bold 22px serif'; ctx.textAlign='left';
+        ctx.fillText('\u266A', 30+Math.sin(dp)*4, headY-26-(tick%26)*0.55);
+        ctx.fillText('\u266B', -50+Math.cos(dp)*4, headY-16-((tick+13)%26)*0.55);
+    }
+    ctx.restore();
+}
+
+/* =========================================================
+   COMPONENTES DE UI
+========================================================= */
+function fitFont(text,maxW,base){
+    let fs=base; ctx.font=`600 ${fs}px Outfit, sans-serif`;
+    while(ctx.measureText(text).width>maxW && fs>11){ fs--; ctx.font=`600 ${fs}px Outfit, sans-serif`; }
+    return fs;
+}
+function button(b,text,opts){
+    opts=opts||{};
+    const hover=opts.hover, fill=opts.fill||'#3a2c18', fillH=opts.fillH||'#5a4226', stroke=opts.stroke||'rgba(240,210,140,.35)', txtCol=opts.txt||'#f4ecd8';
+    ctx.save();
+    rr(b.x,b.y,b.w,b.h,12);
+    if(hover){ ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=12; ctx.shadowOffsetY=4; ctx.fillStyle=fillH; }
+    else ctx.fillStyle=fill;
+    ctx.fill(); ctx.shadowColor='transparent';
+    ctx.lineWidth=hover?2:1.4; ctx.strokeStyle=hover?'#e8c878':stroke; ctx.stroke();
+    const fs=fitFont(text,b.w-22,opts.size||19);
+    ctx.font=`600 ${fs}px Outfit, sans-serif`; ctx.fillStyle=txtCol;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(text,b.x+b.w/2,b.y+b.h/2+1);
+    ctx.restore();
+}
+function circleBtn(b,hover,kind){
+    ctx.save(); ctx.translate(b.x,b.y);
+    ctx.beginPath(); ctx.arc(b.w/2,b.h/2,b.w/2,0,7);
+    ctx.fillStyle=hover?'#e8c878':'#3a2c18'; ctx.fill();
+    ctx.lineWidth=1.6; ctx.strokeStyle=hover?'#fff3d0':'#6a5230'; ctx.stroke();
+    const ic=hover?'#3a2c18':'#e8c878';
+    if(kind==='speaker'){
+        ctx.fillStyle=ic; ctx.beginPath(); ctx.moveTo(11,15); ctx.lineTo(16,15); ctx.lineTo(21,10); ctx.lineTo(21,28); ctx.lineTo(16,23); ctx.lineTo(11,23); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle=ic; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(21,19,5,-0.9,0.9); ctx.stroke(); ctx.beginPath(); ctx.arc(21,19,9,-0.9,0.9); ctx.stroke();
+    } else { // bombillo pista
+        ctx.fillStyle=ic; ctx.beginPath(); ctx.arc(b.w/2,15,7,0,7); ctx.fill();
+        ctx.fillRect(b.w/2-4,21,8,6); ctx.fillRect(b.w/2-3,27,6,3);
+    }
+    ctx.restore();
+}
+function wrapDiary(text,x,y,maxW,lh,color,fs){
+    ctx.font=`700 ${fs}px "Courier Prime", monospace`; ctx.fillStyle=color; ctx.textAlign='left';
+    const words=text.split(' '); let line='', cy=y;
+    for(let i=0;i<words.length;i++){ const t=line+words[i]+' '; if(ctx.measureText(t).width>maxW&&i>0){ ctx.fillText(line,x,cy); line=words[i]+' '; cy+=lh; } else line=t; }
+    ctx.fillText(line,x,cy);
+    return cy;
+}
+function parchment(x,y,w,h){
+    ctx.save();
+    rr(x,y,w,h,14);
+    const g=ctx.createLinearGradient(0,y,0,y+h); g.addColorStop(0,'#f6ead0'); g.addColorStop(1,'#e7d3ad');
+    ctx.fillStyle=g; ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle='#c9a86a'; ctx.stroke();
+    // manchas/borde de café
+    ctx.strokeStyle='rgba(150,110,60,.25)'; ctx.lineWidth=1; rr(x+6,y+6,w-12,h-12,10); ctx.stroke();
+    // líneas de cuaderno tenues
+    ctx.strokeStyle='rgba(150,110,60,.12)';
+    for(let ly=y+40; ly<y+h-80; ly+=26){ ctx.beginPath(); ctx.moveTo(x+24,ly); ctx.lineTo(x+w-24,ly); ctx.stroke(); }
+    ctx.restore();
+}
+
+/* HUD superior */
+function drawHUD(){
+    ctx.fillStyle='rgba(20,14,8,.82)'; ctx.fillRect(HUD.x,HUD.y,HUD.w,HUD.h);
+    ctx.fillStyle='#caa84a'; ctx.fillRect(HUD.x,HUD.h-2,HUD.w,2);
+    ctx.textAlign='left';
+    ctx.font='600 11px Outfit'; ctx.fillStyle='#caa84a'; ctx.fillText("MEMORIA RECUPERADA",24,22);
+    ctx.font='800 24px Outfit'; ctx.fillStyle='#f4ecd8'; ctx.fillText(String(score).padStart(5,'0'),24,46);
+
+    ctx.font='600 11px Outfit'; ctx.fillStyle='#8a7a5a'; ctx.fillText("RACHA",250,22);
+    ctx.font='800 24px Outfit'; ctx.fillStyle=streak>1?'#7ad08a':'#cbb88a'; ctx.fillText(`×${streak}`,250,46);
+
+    const lv=LEVELS[idx]; const cap=CHAPTERS[lv?lv.ch:0];
+    ctx.textAlign='center'; ctx.font='600 11px Outfit'; ctx.fillStyle='#caa84a';
+    ctx.fillText((cap?cap.title.toUpperCase():""), W/2+30, 22);
+    // barra de progreso por recuerdos restaurados
+    const pbX=W/2-130, pbY=34, pbW=320;
+    for(let i=0;i<LEVELS.length;i++){ const dotX=pbX+i*(pbW/(LEVELS.length-1)); ctx.beginPath(); const r=(i===mastered)?(4.5+Math.sin(tick*0.15)*1.5):4.5; ctx.arc(dotX,pbY,r,0,7); ctx.fillStyle = i<mastered?'#caa84a':(i===mastered?'#f4ecd8':'#4a3c24'); ctx.fill(); }
+    ctx.textAlign='left';
+
+    // medidor de recuerdos restaurados
+    ctx.textAlign='right'; ctx.font='600 11px Outfit'; ctx.fillStyle='#caa84a'; ctx.fillText("RECUERDOS",W-24,22);
+    ctx.font='800 24px Outfit'; ctx.fillStyle='#f4ecd8'; ctx.fillText(`${mastered}/${LEVELS.length}`,W-24,46);
+    ctx.textAlign='left';
+}
+function heart(cx,cy,s,active){
+    ctx.save(); ctx.translate(cx,cy); ctx.beginPath();
+    ctx.moveTo(0,s/4); ctx.quadraticCurveTo(-s/2,-s/2,-s/2,s/4); ctx.quadraticCurveTo(-s/2,3*s/4,0,s); ctx.quadraticCurveTo(s/2,3*s/4,s/2,s/4); ctx.quadraticCurveTo(s/2,-s/2,0,s/4); ctx.closePath();
+    if(active){ ctx.fillStyle='#d8534a'; ctx.fill(); } else { ctx.fillStyle='#2a2014'; ctx.fill(); ctx.strokeStyle='#5a4626'; ctx.lineWidth=1.5; ctx.stroke(); }
+    ctx.restore();
+}
+
+/* =========================================================
+   PARTÍCULAS (polvo dorado del recuerdo / fallo)
+========================================================= */
+function spawn(x,y,c,t){ const a=Math.random()*Math.PI*2; const sp=t==='star'?Math.random()*3+1:Math.random()*4+1; particles.push({x,y,vx:Math.cos(a)*sp,vy:t==='star'?-Math.random()*3-1:Math.sin(a)*sp,g:t==='star'?-0.02:0.06,size:Math.random()*4+3,c,a:1,rot:Math.random()*6,rs:(Math.random()-0.5)*0.12,t}); }
+function success(x,y){ const c=['#f0d28a','#e8c878','#fff3c4','#caa84a']; for(let i=0;i<22;i++) spawn(x+(Math.random()-.5)*60,y+(Math.random()-.5)*30,c[i%4],'star'); }
+function failure(x,y){ const c=['#b56a4a','#8a6a5a','#6a5a4a']; for(let i=0;i<16;i++) spawn(x+(Math.random()-.5)*50,y+(Math.random()-.5)*24,c[i%3],'smoke'); }
+function updateParticles(){
+    for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.a-=0.018; p.rot+=p.rs; if(p.a<=0){ particles.splice(i,1); continue; }
+        ctx.save(); ctx.globalAlpha=Math.max(0,p.a); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.beginPath();
+        if(p.t==='star'){ const sp=5,or=p.size,ir=p.size/2; let rot=Math.PI/2*3,x=0,y=-or,st=Math.PI/sp; ctx.moveTo(0,-or); for(let j=0;j<sp;j++){ x=Math.cos(rot)*or; y=Math.sin(rot)*or; ctx.lineTo(x,y); rot+=st; x=Math.cos(rot)*ir; y=Math.sin(rot)*ir; ctx.lineTo(x,y); rot+=st; } ctx.closePath(); }
+        else ctx.arc(0,0,p.size,0,7);
+        ctx.fillStyle=p.c; ctx.fill(); ctx.restore();
+    }
+}
+
+/* =========================================================
+   PANTALLAS
+========================================================= */
+function drawStart(){
+    // fondo: estudio en penumbra con motas
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#241a10'); g.addColorStop(1,'#120d07'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    for(let i=0;i<30;i++){ const px=(i*129+tick*0.5)%W, py=(i*83+tick*0.3)%H; ctx.globalAlpha=0.15+0.15*Math.sin(tick*0.03+i); ctx.fillStyle='#e8c878'; ctx.beginPath(); ctx.arc(px,py,1.4,0,7); ctx.fill(); } ctx.globalAlpha=1;
+
+    drawProfessor(W/2,300,1.55,'talking');
+
+    // diario cerrado a la izquierda
+    ctx.save(); ctx.translate(220,330); ctx.rotate(-0.08);
+    ctx.fillStyle='#7a2f24'; rr(-70,-50,140,100,8); ctx.fill();
+    ctx.fillStyle='#5a221a'; rr(-70,-50,16,100,8); ctx.fill();
+    ctx.fillStyle='#e8c878'; ctx.fillRect(-44,-30,90,2); ctx.fillRect(-44,-22,70,2);
+    ctx.font='800 16px Fraunces, serif'; ctx.fillStyle='#e8c878'; ctx.textAlign='center'; ctx.fillText("DIARIO",0,4);
+    ctx.restore();
+
+    ctx.textAlign='center';
+    ctx.font='900 40px Fraunces, serif'; ctx.fillStyle='#f4ecd8';
+    ctx.fillText("Saludos. Soy el Profesor Arthur.",W/2,400);
+
+    parchment(180,430,W-360,92);
+    ctx.font='400 19px Outfit'; ctx.fillStyle='#5a4426'; ctx.textAlign='center';
+    ctx.fillText("Encontré mi viejo diario, pero la tinta se ha desvanecido con los años.",W/2,468);
+    ctx.fillText("¿Me ayudas a recordar, página por página, cómo era cada día de mi vida?",W/2,496);
+
+    const hover=inside(mx,my,mainBtn); hoverInteractive=hover;
+    button(mainBtn,"ABRIR EL DIARIO",{hover,fill:'#b07d28',fillH:'#d8a945',txt:'#241a10',size:22});
+}
+
+function drawChapterIntro(){
+    const cap=CHAPTERS[introChapter];
+    const lv=LEVELS.find(l=>l.ch===introChapter);
+    // escena de fondo a media nitidez como teaser
+    if(lv&&SCENES[lv.scene]) { ctx.save(); rr(0,0,W,H,0); ctx.clip(); SCENES[lv.scene](); ctx.restore(); }
+    ctx.fillStyle='rgba(18,12,6,.74)'; ctx.fillRect(0,0,W,H);
+
+    ctx.textAlign='center';
+    ctx.font='600 16px Outfit'; ctx.fillStyle='#caa84a'; ctx.fillText(cap.name.toUpperCase(),W/2,150);
+    ctx.font='900 56px Fraunces, serif'; ctx.fillStyle='#f4ecd8'; ctx.fillText(cap.title,W/2,210);
+    ctx.strokeStyle='#caa84a'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(W/2-60,230); ctx.lineTo(W/2+60,230); ctx.stroke();
+
+    drawProfessor(190,470,1.25,'neutral');
+
+    parchment(300,300,640,200);
+    ctx.font='italic 21px Fraunces, serif'; ctx.fillStyle='#4a3620'; ctx.textAlign='left';
+    wrapDiaryLike(cap.text,330,348,580,32);
+
+    const hover=inside(mx,my,mainBtn); hoverInteractive=hover;
+    button(mainBtn,"CONTINUAR",{hover,fill:'#b07d28',fillH:'#d8a945',txt:'#241a10',size:21});
+}
+function wrapDiaryLike(text,x,y,maxW,lh){
+    ctx.font='italic 21px Fraunces, serif';
+    const words=text.split(' '); let line='', cy=y;
+    for(let i=0;i<words.length;i++){ const t=line+words[i]+' '; if(ctx.measureText(t).width>maxW&&i>0){ ctx.fillText(line,x,cy); line=words[i]+' '; cy+=lh; } else line=t; }
+    ctx.fillText(line,x,cy);
+}
+
+/* ---- PRE-TAREA: vocabulario clave del capítulo (input + audio) ---- */
+function vocabLayout(n){
+    const rects=[]; const cw=340, h=84, gx=20, gy=18, x0=140, y0=232;
+    for(let i=0;i<n;i++){ const c=i%2, r=Math.floor(i/2); rects.push({x:x0+c*(cw+gx), y:y0+r*(h+gy), w:cw, h}); }
+    return rects;
+}
+function miniSpeaker(x,y,seen){
+    ctx.save(); ctx.beginPath(); ctx.arc(x+13,y+13,13,0,7); ctx.fillStyle=seen?'#caa84a':'#3a2c18'; ctx.fill();
+    const ic=seen?'#241a10':'#e8c878'; ctx.fillStyle=ic;
+    ctx.beginPath(); ctx.moveTo(x+7,y+11); ctx.lineTo(x+10,y+11); ctx.lineTo(x+14,y+7); ctx.lineTo(x+14,y+19); ctx.lineTo(x+10,y+15); ctx.lineTo(x+7,y+15); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle=ic; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(x+14,y+13,4,-0.8,0.8); ctx.stroke();
+    ctx.restore();
+}
+function drawPretask(){
+    const cap=CHAPTERS[introChapter];
+    const lv=LEVELS.find(l=>l.ch===introChapter);
+    if(lv&&SCENES[lv.scene]){ ctx.save(); rr(0,0,W,H,0); ctx.clip(); SCENES[lv.scene](); ctx.restore(); }
+    ctx.fillStyle='rgba(18,12,6,.82)'; ctx.fillRect(0,0,W,H);
+
+    ctx.textAlign='center';
+    ctx.font='600 15px Outfit'; ctx.fillStyle='#caa84a'; ctx.fillText("PREPARÉMONOS · "+cap.name.toUpperCase(),W/2,86);
+    ctx.font='900 40px Fraunces, serif'; ctx.fillStyle='#f4ecd8'; ctx.fillText("Palabras clave",W/2,134);
+    ctx.font='400 16px Outfit'; ctx.fillStyle='#d8c39a'; ctx.fillText("Toca cada tarjeta para escucharla y descubrir su significado.",W/2,166);
+
+    const cards=vocabLayout(cap.vocab.length); let anyHover=false;
+    cards.forEach((b,i)=>{
+        const seen=vocabSeen.includes(introChapter+'-'+i);
+        const hv=inside(mx,my,b); if(hv) anyHover=true;
+        ctx.save(); rr(b.x,b.y,b.w,b.h,12); ctx.fillStyle=seen?'#efe2c4':(hv?'#3a2c18':'#241a10'); ctx.fill();
+        ctx.lineWidth=1.6; ctx.strokeStyle=seen?'#caa84a':(hv?'#e8c878':'#5a4226'); ctx.stroke(); ctx.restore();
+        miniSpeaker(b.x+b.w-40, b.y+b.h/2-13, seen);
+        ctx.textAlign='left';
+        ctx.font='700 19px "Courier Prime", monospace'; ctx.fillStyle=seen?'#3a2a16':'#e8c878';
+        ctx.fillText(cap.vocab[i].en, b.x+18, seen?b.y+32:b.y+b.h/2+6);
+        if(seen){ let gs=13; ctx.font='400 '+gs+'px Outfit'; while(ctx.measureText(cap.vocab[i].es).width>b.w-46&&gs>9){ gs--; ctx.font='400 '+gs+'px Outfit'; } ctx.fillStyle='#6a5436'; ctx.fillText(cap.vocab[i].es, b.x+18, b.y+60); }
+    });
+
+    mainBtn.y=600; const hover=inside(mx,my,mainBtn); hoverInteractive=hover||anyHover;
+    const allSeen=vocabSeen.filter(s=>s.startsWith(introChapter+'-')).length>=cap.vocab.length;
+    button(mainBtn, allSeen?"EMPEZAR EL CAPÍTULO":"EMPEZAR  ·  (explora las tarjetas)", {hover,fill:'#b07d28',fillH:'#d8a945',txt:'#241a10',size:allSeen?21:16});
+}
+function drawProductionBg(){ const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#241a10'); g.addColorStop(1,'#120d07'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+
+function drawScene(){
+    const lv=LEVELS[idx];
+    if(SCENES[lv.scene]){ ctx.save(); rr(SCENE.x,SCENE.y,SCENE.w,SCENE.h,4); ctx.clip(); SCENES[lv.scene](); ctx.restore(); }
+    // Arthur dentro de la escena (esquina inferior izquierda)
+    drawProfessor(SCENE.x+90, SCENE.y+SCENE.h-12, 0.92, state===STATES.FEEDBACK?(isCorrect?'dance':'sad'):'neutral');
+    memoryVeil(clarity);
+}
+
+function drawPlaying(){
+    drawScene();
+    drawHUD();
+
+    const lv=LEVELS[idx];
+    parchment(PAGE.x,PAGE.y,PAGE.w,PAGE.h);
+
+    ctx.textAlign='left';
+    ctx.font='800 22px Fraunces, serif'; ctx.fillStyle='#8a5a1e';
+    ctx.fillText("«"+lv.title+"»", PAGE.x+28, PAGE.y+42);
+
+    ctx.font='400 16px Outfit'; ctx.fillStyle='#7a5a36';
+    ctx.fillText(lv.instruction, PAGE.x+28, PAGE.y+68);
+
+    // frase con previsualización
+    let disp=lv.question;
+    if(hovered!==-1) disp=fillBlank(lv.question,`[ ${optText(hovered)} ]`);
+    wrapDiary(disp, PAGE.x+28, PAGE.y+108, PAGE.w-150, 32, hovered!==-1?'#9a5a1e':'#3a2a16', 21);
+
+    // pista (manual o automática tras el primer fallo de esta entrada)
+    const showHint = hintOn || (failCount[idx]>=1);
+    if(showHint){
+        ctx.font='italic 15px Fraunces, serif'; ctx.fillStyle='#5a4a2e'; ctx.textAlign='left';
+        ctx.fillText("💡 Arthur susurra: «"+lv.hint+"»", PAGE.x+28, PAGE.y+PAGE.h-100);
+    }
+
+    // botones circulares
+    const hs=inside(mx,my,speakerBtn), hh=inside(mx,my,hintBtn);
+    circleBtn(speakerBtn,hs,'speaker'); circleBtn(hintBtn,hh,'hint');
+
+    // opciones (orden barajado)
+    hovered=-1; let anyHover=hs||hh;
+    for(let i=0;i<optBtns.length;i++){ const hv=inside(mx,my,optBtns[i]); if(hv){ hovered=i; anyHover=true; } button(optBtns[i],optText(i),{hover:hv}); }
+    hoverInteractive=anyHover;
+}
+
+function drawFeedback(){
+    drawScene();
+    drawHUD();
+    const lv=LEVELS[idx];
+    parchment(PAGE.x,PAGE.y,PAGE.w,PAGE.h);
+    // marco de color según resultado
+    ctx.save(); rr(PAGE.x+3,PAGE.y+3,PAGE.w-6,PAGE.h-6,12); ctx.lineWidth=3; ctx.strokeStyle=isCorrect?'#5aa86a':'#c25a4a'; ctx.stroke(); ctx.restore();
+
+    ctx.textAlign='left';
+    ctx.font='800 22px Fraunces, serif'; ctx.fillStyle='#8a5a1e'; ctx.fillText("«"+lv.title+"»",PAGE.x+28,PAGE.y+42);
+
+    ctx.font='600 17px Outfit'; ctx.fillStyle=isCorrect?'#3a8a4a':'#b04a3a';
+    ctx.fillText(isCorrect?'«¡Eso es! Lo recuerdo con claridad ahora.»':'«Mmm… no fue así. Volveré a preguntártelo más tarde.»',PAGE.x+28,PAGE.y+70);
+
+    // frase con respuesta revelada (typewriter en correcto)
+    let shown;
+    if(isCorrect){ const full=lv.correct.toUpperCase(); const part=full.substring(0,Math.floor(reveal)); shown=fillBlank(lv.question,`[${part}]`); }
+    else shown=lv.question;
+    wrapDiary(shown,PAGE.x+28,PAGE.y+112,PAGE.w-150,32,isCorrect?'#3a8a4a':'#9a3a2a',21);
+
+    const hs=inside(mx,my,speakerBtn); circleBtn(speakerBtn,hs,'speaker');
+    circleBtn(hintBtn,false,'hint');
+
+    for(let i=0;i<optBtns.length;i++){ const o=optText(i); let opts={hover:false}; if(o===lv.correct){ opts={hover:true,fill:'#3a8a4a',fillH:'#4aa05a',stroke:'#7ad08a',txt:'#fff'}; } else if(i===selected&&!isCorrect){ opts={hover:true,fill:'#b04a3a',fillH:'#c25a4a',stroke:'#e89a8a',txt:'#fff'}; } button(optBtns[i],o,opts); }
+    hoverInteractive=hs;
+}
+
+function drawGameOver(){
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#2a1010'); g.addColorStop(1,'#100808'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    drawProfessor(W/2,290,1.6,'sad');
+    ctx.textAlign='center';
+    ctx.font='900 46px Fraunces, serif'; ctx.fillStyle='#d8534a'; ctx.fillText("Las memorias se desvanecen",W/2,380);
+    ctx.font='400 20px Outfit'; ctx.fillStyle='#e8b0a8'; ctx.fillText("«Las páginas se han vuelto ilegibles… intentémoslo otra vez.»",W/2,420);
+    parchment(W/2-220,450,440,70);
+    ctx.font='600 19px Outfit'; ctx.fillStyle='#5a4426'; ctx.textAlign='left'; ctx.fillText("Entradas restauradas:",W/2-180,492);
+    ctx.font='800 22px Outfit'; ctx.fillStyle='#8a5a1e'; ctx.textAlign='right'; ctx.fillText(`${idx} de ${LEVELS.length}`,W/2+180,492);
+    mainBtn.y=560; const hover=inside(mx,my,mainBtn); hoverInteractive=hover;
+    button(mainBtn,"INTENTAR DE NUEVO",{hover,fill:'#a03a2a',fillH:'#c25a4a',txt:'#fff',size:20});
+}
+
+function drawVictory(){
+    const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#1a2410'); g.addColorStop(.6,'#241a10'); g.addColorStop(1,'#120d07'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    if(Math.random()<0.25) success(Math.random()*W,30);
+    drawProfessor(W/2,250,1.5,'dance');
+    ctx.textAlign='center';
+    ctx.font='900 50px Fraunces, serif'; ctx.fillStyle='#e8c878'; ctx.fillText("Diario Restaurado",W/2,330);
+    ctx.font='italic 21px Fraunces, serif'; ctx.fillStyle='#bfe0a0';
+    ctx.fillText("«Lo recuerdo todo: el amanecer, mis estudiantes, la calma de la noche.»",W/2,366);
+    ctx.fillText("«Gracias por devolverme mi día. Gracias, de corazón.»",W/2,394);
+
+    parchment(W/2-260,420,520,110);
+    ctx.font='600 18px Outfit'; ctx.fillStyle='#5a4426'; ctx.textAlign='left';
+    ctx.fillText("Puntuación final:",W/2-220,458); ctx.fillText("Mejor racha:",W/2-220,492); ctx.fillText("Mejor histórico:",W/2-220,524);
+    ctx.font='800 20px Outfit'; ctx.fillStyle='#8a5a1e'; ctx.textAlign='right';
+    ctx.fillText(String(score),W/2+220,458); ctx.fillText(`×${maxStreak}`,W/2+220,492); ctx.fillText(String(highScore),W/2+220,524);
+
+    mainBtn.y=560; const hover=inside(mx,my,mainBtn); hoverInteractive=hover;
+    button(mainBtn,"REVIVIR EL DÍA",{hover,fill:'#b07d28',fillH:'#d8a945',txt:'#241a10',size:21});
+}
+
+/* =========================================================
+   INTERACCIÓN
+========================================================= */
+window.addEventListener('mousemove',e=>{ const p=mouse(e); mx=p.x; my=p.y; });
+window.addEventListener('mousedown',e=>{ const p=mouse(e); handle(p.x,p.y); });
+canvas.addEventListener('touchstart',e=>{ e.preventDefault(); const t=e.touches[0]; const p=mouse(t); mx=p.x; my=p.y; handle(p.x,p.y); },{passive:false});
+
+function handle(x,y){
+    Sound.init();
+    if(state===STATES.PLAYING||state===STATES.FEEDBACK){
+        if(inside(x,y,speakerBtn)){
+            const lv=LEVELS[idx]; let word=null;
+            if(state===STATES.FEEDBACK&&isCorrect) word=lv.correct;
+            else if(state===STATES.PLAYING&&hovered!==-1) word=optText(hovered);
+            if(word) Speech.speak(fillBlank(lv.question, word));
+            else Speech.speakBlank(lv.question);
+            success(x,y); Sound.chime(); return;
+        }
+        if(state===STATES.PLAYING&&inside(x,y,hintBtn)){ hintOn=!hintOn; Sound.click(); return; }
+    }
+    if(state===STATES.START){ if(inside(x,y,mainBtn)){ reset(); Sound.page(); introChapter=0; state=STATES.CHAPTER; } }
+    else if(state===STATES.CHAPTER){ if(inside(x,y,mainBtn)){ Sound.page(); vocabSeen=vocabSeen.filter(s=>!s.startsWith(introChapter+'-')); state=STATES.PRETASK; } }
+    else if(state===STATES.PRETASK){
+        const cap=CHAPTERS[introChapter]; const cards=vocabLayout(cap.vocab.length);
+        for(let i=0;i<cards.length;i++){ if(inside(x,y,cards[i])){ const key=introChapter+'-'+i; if(!vocabSeen.includes(key)) vocabSeen.push(key); Speech.speak(cap.vocab[i].en.replace(/\//g,', ')); Sound.chime(); return; } }
+        if(inside(x,y,mainBtn)){ Sound.page(); startChapter(introChapter); }
+    }
+    else if(state===STATES.PLAYING){
+        for(let i=0;i<optBtns.length;i++){ if(inside(x,y,optBtns[i])){ selected=i; clickX=x; clickY=y; evaluate(); break; } }
+    }
+    else if(state===STATES.VICTORY){ if(inside(x,y,mainBtn)){ reset(); Sound.page(); state=STATES.START; } }
+}
+
+function reset(){ score=0; streak=1; maxStreak=1; idx=0; mastered=0; queue=[]; failCount={}; vocabSeen=[]; particles=[]; hintOn=false; hideProd(); }
+function enterLevel(){ fade=0; clarity=0; hintOn=false; hovered=-1; }
+
+/* --- Bucle de dominio: cola por capítulo, los fallos regresan al final --- */
+function startChapter(ch){ curChapter=ch; queue=[]; LEVELS.forEach((l,i)=>{ if(l.ch===ch) queue.push(i); }); nextEntry(); }
+function nextEntry(){ idx=queue[0]; optOrder=shuffle([0,1,2,3]); enterLevel(); state=STATES.PLAYING; }
+function advance(){
+    if(queue.length>0){ nextEntry(); return; }
+    if(curChapter<CHAPTERS.length-1){ introChapter=curChapter+1; state=STATES.CHAPTER; }
+    else startProduction();
+}
+
+function evaluate(){
+    const lv=LEVELS[idx];
+    state=STATES.FEEDBACK; feedbackTimer=FEEDBACK_DUR; reveal=0; hintOn=false;
+    const chosen=lv.options[optOrder[selected]];
+    if(chosen===lv.correct){
+        isCorrect=true; score+=100*streak;
+        if(score>highScore){ highScore=score; try{ localStorage.setItem('arthur_high',highScore); }catch(e){} }
+        success(clickX,clickY); Sound.correct(); streak++; if(streak>maxStreak) maxStreak=streak;
+    } else {
+        isCorrect=false; streak=1; failCount[idx]=(failCount[idx]||0)+1; failure(clickX,clickY); shake=12; shakeMag=4; Sound.wrong();
+    }
+}
+
+/* --- Producción final (salida): el estudiante escribe su propia rutina --- */
+const prodEl={};
+function startProduction(){ showProd(); state=STATES.PRODUCTION; }
+function showProd(){ const p=document.getElementById('prod'); if(p){ p.style.display='block'; prodUpdate(); setTimeout(()=>{ const t=document.getElementById('prodText'); if(t) t.focus(); },60); } }
+function hideProd(){ const p=document.getElementById('prod'); if(p) p.style.display='none'; }
+function prodAnalyze(){ const t=(document.getElementById('prodText')||{value:''}).value.toLowerCase(); return [
+    {l:"Un conector de secuencia (First / Then / Finally)", ok:/\b(first|then|after that|finally)\b/.test(t)},
+    {l:"Una hora con « at » (at 7 / at night)", ok:/\bat (\d|night|noon)/.test(t)},
+    {l:"Una parte del día (in the morning / in the afternoon)", ok:/\bin the (morning|afternoon|evening)\b/.test(t)},
+    {l:"Una colocación con « have » (have breakfast / lunch / dinner)", ok:/\bhave (breakfast|lunch|dinner)\b/.test(t)}
+]; }
+function prodUpdate(){
+    const text=(document.getElementById('prodText')||{value:''}).value;
+    const checks=prodAnalyze(); const ok=checks.filter(c=>c.ok).length; const len=text.trim().length;
+    const ul=document.getElementById('prodChecks');
+    if(ul) ul.innerHTML=checks.map(c=>`<li style="margin:5px 0;color:${c.ok?'#7ad08a':'#b8a578'};list-style:none">${c.ok?'✓':'○'}&nbsp;&nbsp;${c.l}</li>`).join('');
+    const cnt=document.getElementById('prodCount'); if(cnt) cnt.textContent=len+' caracteres · '+ok+'/4 ingredientes';
+    const ready=(ok>=2 && len>=100); const btn=document.getElementById('prodFinish');
+    if(btn){ btn.disabled=!ready; btn.style.opacity=ready?'1':'.4'; btn.style.cursor=ready?'pointer':'not-allowed'; }
+}
+
+/* =========================================================
+   BUCLE PRINCIPAL
+========================================================= */
+function loop(){
+    tick++;
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    if(shake>0){ const m=(shake/12)*shakeMag; ctx.translate((Math.random()-.5)*m,(Math.random()-.5)*m); shake--; }
+
+    // transición de aparición y nitidez
+    if(state===STATES.PLAYING){ fade=Math.min(1,fade+0.05); clarity=Math.max(clarity, Math.min(0.34, fade*0.34)); }
+    if(state===STATES.FEEDBACK&&isCorrect){ clarity=Math.min(1,clarity+0.035); reveal=Math.min(LEVELS[idx].correct.length, reveal+0.7); }
+
+    switch(state){
+        case STATES.START: drawStart(); break;
+        case STATES.CHAPTER: drawChapterIntro(); break;
+        case STATES.PRETASK: drawPretask(); break;
+        case STATES.PLAYING: drawPlaying(); break;
+        case STATES.FEEDBACK:
+            drawFeedback(); feedbackTimer--;
+            if(feedbackTimer<=0){
+                if(isCorrect){ mastered++; queue.shift(); }
+                else { const cur=queue.shift(); queue.push(cur); }
+                advance();
+            }
+            break;
+        case STATES.PRODUCTION: drawProductionBg(); break;
+        case STATES.GAMEOVER: drawGameOver(); break;
+        case STATES.VICTORY: drawVictory(); break;
+    }
+    updateParticles();
+    ctx.restore();
+    canvas.style.cursor=hoverInteractive?'pointer':'default';
+    requestAnimationFrame(loop);
+}
+// --- Eventos del panel de producción ---
+(function(){
+    const t=document.getElementById('prodText');
+    const s=document.getElementById('prodSpeak');
+    const f=document.getElementById('prodFinish');
+    if(t) t.addEventListener('input', prodUpdate);
+    if(s) s.addEventListener('click', ()=>{ if(t&&t.value.trim()) Speech.speak(t.value); });
+    if(f) f.addEventListener('click', ()=>{ if(f.disabled) return; hideProd(); state=STATES.VICTORY; Sound.win(); });
+})();
+
+window.onload=()=>requestAnimationFrame(loop);
+</script>
+</body>
+</html>
